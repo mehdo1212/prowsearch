@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProwSearch</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --accent-color: #3a86ff;
+            --secondary-bg: #1e1e1e;
+            --border-color: #333;
+            --hover-color: #2a2a2a;
+            --error-color: #ff4757;
+            --success-color: #2ed573;
+            --placeholder-bg: #2c2c2c;
+            --placeholder-text: #555;
+        }
+
+        .light-mode {
+            --bg-color: #f5f5f5;
+            --text-color: #121212;
+            --accent-color: #0066cc;
+            --secondary-bg: #ffffff;
+            --border-color: #ddd;
+            --hover-color: #eaeaea;
+            --error-color: #ff6b81;
+            --success-color: #7bed9f;
+            --placeholder-bg: #e0e0e0;
+            --placeholder-text: #999;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--secondary-bg);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            width: 32px;
+            height: 32px;
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 600;
+            background: linear-gradient(90deg, var(--accent-color), #7b68ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover h1 {
+            transform: scale(1.05);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav-button, .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .nav-button:hover, .theme-toggle:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-2px);
+        }
+
+        .search-container {
+            margin: 30px 0;
+            display: flex;
+            position: relative;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 16px 20px;
+            border-radius: 50px;
+            border: 2px solid var(--border-color);
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 20px rgba(58, 134, 255, 0.2);
+        }
+
+        .search-button {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-button:hover {
+            background-color: #2a75e6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .loader {
+            display: none;
+            margin: 20px auto;
+            border: 5px solid var(--secondary-bg);
+            border-top: 5px solid var(--accent-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .category-header {
+            margin: 30px 0 15px;
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .category-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: var(--border-color);
+            margin-left: 15px;
+        }
+
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .movie-card {
+            background-color: var(--secondary-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            animation: cardIn 0.5s ease;
+            animation-fill-mode: both;
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .movie-poster {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .movie-card:hover .movie-poster {
+            transform: scale(1.05);
+        }
+
+        .movie-info {
+            padding: 12px;
+        }
+
+        .movie-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .movie-year {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .result-details {
+            background-color: var(--secondary-bg);
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item:hover {
+            background-color: var(--hover-color);
+            padding-left: 20px;
+        }
+
+        .result-title {
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .result-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .result-size, .result-peers {
+            font-size: 14px;
+            padding: 4px 10px;
+            background-color: var(--border-color);
+            border-radius: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .result-item:hover .result-size,
+        .result-item:hover .result-peers {
+            transform: scale(1.05);
+        }
+
+        .magnet-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--accent-color);
+            transition: all 0.3s ease;
+        }
+
+        .magnet-link:hover {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(58, 134, 255, 0.3);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            font-size: 20px;
+            color: #888;
+            animation: fadeIn 1s ease;
+        }
+
+        .cat-icon {
+            width: 100px;
+            margin: 0 auto 20px;
+            display: block;
+            opacity: 0.8;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+            color: #888;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--secondary-bg);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            z-index: 10;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .close-modal:hover {
+            background-color: var(--hover-color);
+            transform: rotate(90deg);
+        }
+
+        .movie-detail {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .movie-poster-large {
+            width: 200px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .movie-poster-large:hover {
+            transform: scale(1.03);
+        }
+
+        .movie-detail-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .movie-detail-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, var(--accent-color), #7b68ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .movie-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .movie-year, .movie-rating {
+            padding: 5px 12px;
+            background-color: var(--border-color);
+            border-radius: 20px;
+            font-size: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        .movie-year:hover, .movie-rating:hover {
+            transform: scale(1.05);
+        }
+
+        .movie-overview {
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .sources-header {
+            padding: 15px 20px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-color);
+            background-color: var(--hover-color);
+        }
+
+        .settings-container {
+            background-color: var(--secondary-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .settings-section {
+            margin-bottom: 25px;
+        }
+
+        .settings-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .settings-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .settings-option:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            font-size: 16px;
+        }
+
+        .settings-description {
+            font-size: 14px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .dropdown-select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            min-width: 150px;
+            font-size: 14px;
+        }
+
+        .input-field {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            min-width: 200px;
+            font-size: 14px;
+        }
+
+        .save-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .save-button:hover {
+            background-color: #2a75e6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .placeholder-poster {
+            width: 100%;
+            aspect-ratio: 2/3;
+            background-color: var(--placeholder-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: var(--placeholder-text);
+        }
+
+        .placeholder-poster-large {
+            width: 200px;
+            aspect-ratio: 2/3;
+            background-color: var(--placeholder-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: var(--placeholder-text);
+            border-radius: 12px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.success {
+            background-color: var(--success-color);
+        }
+
+        .notification.error {
+            background-color: var(--error-color);
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .tab-navigation {
+            display: none;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .tab-navigation a {
+            color: #888;
+            text-decoration: none;
+        }
+
+        .tab-navigation a:hover {
+            color: var(--accent-color);
+        }
+
+        .cat-container {
+            margin: 50px auto;
+            text-align: center;
+            opacity: 0.8;
+        }
+        
+        .cat-ascii {
+            font-family: monospace;
+            white-space: pre;
+            font-size: 14px;
+            line-height: 1;
+            display: inline-block;
+            text-align: left;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @media (max-width: 768px) {
+            .results-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .movie-poster-large {
+                width: 150px;
+            }
+
+            .movie-detail {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .movie-detail-info {
+                min-width: unset;
+            }
+
+            .movie-meta {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="navigateTo('home')">
+            <div class="cat-icon">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <path d="M30,20 C10,20 5,50 5,60 C5,80 20,95 50,95 C80,95 95,80 95,60 C95,50 90,20 70,20 C60,20 55,25 50,35 C45,25 40,20 30,20 Z"></path>
+                    <circle cx="30" cy="40" r="5"></circle>
+                    <circle cx="70" cy="40" r="5"></circle>
+                    <path d="M40,60 Q50,70 60,60" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+                </svg>
+            </div>
+            <h1>ProwSearch</h1>
+        </div>
+        <div class="nav-buttons">
+            <button class="nav-button" onclick="navigateTo('settings')">⚙️</button>
+            <button class="theme-toggle" id="themeToggle">🌙</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="tabNavigation" class="tab-navigation">
+            <span id="breadcrumb">Home</span>
+        </div>
+
+        <!-- Home View -->
+        <div id="homeView">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search for movies, TV shows, anime...">
+                <button id="searchButton" class="search-button">Search</button>
+            </div>
+
+            <div id="loader" class="loader"></div>
+
+            <div id="initialView" class="cat-container">
+                <div class="cat-ascii">
+                    /\\_/\\
+                   ( o.o )
+                    > ^ <
+                </div>
+                <p>Enter a search term to begin</p>
+            </div>
+
+            <div id="noResults" class="no-results" style="display: none;">
+                <div class="cat-ascii">
+                    /\\_/\\
+                   ( x.x )
+                    > ^ <
+                </div>
+                <h2>404 No results!</h2>
+                <p>Try another search term</p>
+            </div>
+
+            <div id="resultsView" style="display: none;">
+                <h2 class="category-header">Movies</h2>
+                <div id="resultsContainer" class="results-container"></div>
+            </div>
+        </div>
+
+        <!-- Settings View -->
+        <div id="settingsView" style="display: none;">
+            <h2 class="category-header">Settings</h2>
+            
+            <div class="settings-container">
+                <!-- ... existing code ... -->
+<div class="settings-section">
+    <h3 class="settings-title">General</h3>
+    
+    <!-- Removed Dark Mode toggle option -->
+    
+    <div class="settings-option">
+        <div>
+            <div class="settings-label">Animation Effects</div>
+            <div class="settings-description">Enable or disable animations</div>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="animationsToggle" checked>
+            <span class="slider"></span>
+        </label>
+    </div>
+    
+    <div class="settings-option">
+        <div>
+            <div class="settings-label">Default Results Per Page</div>
+            <div class="settings-description">Number of results to display at once</div>
+        </div>
+        <select id="resultsPerPage" class="dropdown-select">
+            <option value="12">12</option>
+            <option value="24">24</option>
+            <option value="36">36</option>
+            <option value="48">48</option>
+        </select>
+    </div>
+</div>
+<!-- ... existing code ... -->
+                
+                <div class="settings-section">
+                    <h3 class="settings-title">API Configuration</h3>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="settings-label">Prowlarr URL</div>
+                            <div class="settings-description">URL of your Prowlarr instance</div>
+                        </div>
+                        <input type="text" id="prowlarrUrl" class="input-field" value="https://probable-garbanzo-74r779r9x6ghpgwr-9696.app.github.dev/">
+                    </div>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="settings-label">Prowlarr API Key</div>
+                            <div class="settings-description">API key for Prowlarr</div>
+                        </div>
+                        <input type="password" id="prowlarrApiKey" class="input-field" value="4Lol">
+                    </div>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="settings-label">TMDB API Key</div>
+                            <div class="settings-description">API key for The Movie Database</div>
+                        </div>
+                        <input type="text" id="tmdbApiKey" class="input-field" value="9adc9a0826ea0067d3577f1fcd577f36">
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-title">Search Preferences</h3>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="settings-label">Search Categories</div>
+                            <div class="settings-description">Select which categories to search</div>
+                        </div>
+                        <select id="searchCategories" class="dropdown-select">
+                            <option value="all">All Categories</option>
+                            <option value="movies">Movies Only</option>
+                            <option value="tv">TV Shows Only</option>
+                            <option value="anime">Anime Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="settings-label">Auto Search on Input</div>
+                            <div class="settings-description">Search automatically while typing</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="autoSearchToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="settings-label">Preferred Quality</div>
+                            <div class="settings-description">Default quality for search results</div>
+                        </div>
+                        <select id="preferredQuality" class="dropdown-select">
+                            <option value="any">Any Quality</option>
+                            <option value="hd">HD (720p/1080p)</option>
+                            <option value="4k">4K/UHD</option>
+                            <option value="sd">SD</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button id="saveSettings" class="save-button">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="movieModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <div id="movieDetail" class="movie-detail"></div>
+            <h3 class="sources-header">Available Sources</h3>
+            <div id="movieSources"></div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <footer>
+        &copy; 2025 ProwSearch - Powered by Prowlarr
+    </footer>
+
+    <script>
+        // Configuration (now loaded from settings)
+let config = {
+    prowlarrUrl: 'https://probable-garbanzo-74r779r9x6ghpgwr-9696.app.github.dev/',
+    prowlarrApiKey: '4Lol',
+    tmdbApiKey: '9adc9a0826ea0067d3577f1fcd577f36',
+    resultsPerPage: 12,
+    darkMode: true,
+    animations: true,
+    autoSearch: false,
+    searchCategories: 'all',
+    preferredQuality: 'any'
+};
+
+// DOM Elements
+const searchInput = document.getElementById('searchInput');
+const searchButton = document.getElementById('searchButton');
+const loader = document.getElementById('loader');
+const initialView = document.getElementById('initialView');
+const noResults = document.getElementById('noResults');
+const resultsView = document.getElementById('resultsView');
+const resultsContainer = document.getElementById('resultsContainer');
+const movieModal = document.getElementById('movieModal');
+const closeModal = document.getElementById('closeModal');
+const movieDetail = document.getElementById('movieDetail');
+const movieSources = document.getElementById('movieSources');
+const notification = document.getElementById('notification');
+const homeView = document.getElementById('homeView');
+const settingsView = document.getElementById('settingsView');
+const tabNavigation = document.getElementById('tabNavigation');
+const breadcrumb = document.getElementById('breadcrumb');
+const themeToggle = document.getElementById('themeToggle');
+
+// Settings Elements
+// Removed darkModeToggle reference
+const animationsToggle = document.getElementById('animationsToggle');
+const resultsPerPageSelect = document.getElementById('resultsPerPage');
+const prowlarrUrlInput = document.getElementById('prowlarrUrl');
+const prowlarrApiKeyInput = document.getElementById('prowlarrApiKey');
+const tmdbApiKeyInput = document.getElementById('tmdbApiKey');
+const searchCategoriesSelect = document.getElementById('searchCategories');
+const autoSearchToggle = document.getElementById('autoSearchToggle');
+const preferredQualitySelect = document.getElementById('preferredQuality');
+const saveSettingsButton = document.getElementById('saveSettings');
+
+// Load settings from localStorage
+function loadSettings() {
+    const savedSettings = localStorage.getItem('prowSearchSettings');
+    if (savedSettings) {
+        try {
+            const parsedSettings = JSON.parse(savedSettings);
+            config = { ...config, ...parsedSettings };
+        } catch (e) {
+            console.error('Error parsing saved settings:', e);
+            localStorage.removeItem('prowSearchSettings');
+        }
+    }
+    
+    // Apply settings to UI
+    // Removed darkModeToggle setting
+    animationsToggle.checked = config.animations;
+    resultsPerPageSelect.value = config.resultsPerPage.toString();
+    prowlarrUrlInput.value = config.prowlarrUrl;
+    prowlarrApiKeyInput.value = config.prowlarrApiKey;
+    tmdbApiKeyInput.value = config.tmdbApiKey;
+    searchCategoriesSelect.value = config.searchCategories;
+    autoSearchToggle.checked = config.autoSearch;
+    preferredQualitySelect.value = config.preferredQuality;
+    
+    // Apply theme
+    applyTheme();
+    
+    // Apply animations
+    if (!config.animations) {
+        document.body.style.setProperty('--transition-duration', '0s');
+    }
+}
+
+// Apply theme based on current config
+function applyTheme() {
+    if (config.darkMode) {
+        document.body.classList.remove('light-mode');
+        themeToggle.textContent = '🌙';
+    } else {
+        document.body.classList.add('light-mode');
+        themeToggle.textContent = '☀️';
+    }
+}
+
+// Save settings to localStorage
+function saveSettings() {
+    // Removed darkModeToggle setting
+    config.animations = animationsToggle.checked;
+    config.resultsPerPage = parseInt(resultsPerPageSelect.value);
+    
+    // Check if Prowlarr settings have changed
+    const prowlarrChanged = 
+        config.prowlarrUrl !== prowlarrUrlInput.value || 
+        config.prowlarrApiKey !== prowlarrApiKeyInput.value;
+    
+    if (prowlarrChanged) {
+        const confirmed = confirm("Warning: Changing Prowlarr settings may affect search functionality. Are you sure you want to continue?");
+        if (!confirmed) {
+            // Revert to original values
+            prowlarrUrlInput.value = config.prowlarrUrl;
+            prowlarrApiKeyInput.value = config.prowlarrApiKey;
+            return;
+        }
+    }
+    
+    // Update config with new values
+    config.prowlarrUrl = prowlarrUrlInput.value;
+    config.prowlarrApiKey = prowlarrApiKeyInput.value;
+    config.tmdbApiKey = tmdbApiKeyInput.value;
+    config.searchCategories = searchCategoriesSelect.value;
+    config.autoSearch = autoSearchToggle.checked;
+    config.preferredQuality = preferredQualitySelect.value;
+    
+    // Save to localStorage
+    try {
+        localStorage.setItem('prowSearchSettings', JSON.stringify(config));
+        applyTheme(); // Apply theme immediately after save
+        showNotification('Settings saved successfully!', 'success');
+        
+        // Return to home view after saving
+        navigateTo('home');
+    } catch (e) {
+        console.error('Error saving settings:', e);
+        showNotification('Error saving settings. Please try again.', 'error');
+    }
+}
+
+// Navigation
+function navigateTo(page) {
+    switch (page) {
+        case 'home':
+            homeView.style.display = 'block';
+            settingsView.style.display = 'none';
+            breadcrumb.textContent = 'Home';
+            tabNavigation.style.display = 'none';
+            break;
+        case 'settings':
+            homeView.style.display = 'none';
+            settingsView.style.display = 'block';
+            breadcrumb.innerHTML = '<a href="#" onclick="navigateTo(\'home\')">Home</a> > Settings';
+            tabNavigation.style.display = 'block';
+            break;
+    }
+}
+
+// Prowlarr API
+async function searchProwlarr(query) {
+    try {
+        const categoryParam = getCategoryParam();
+        // Ensure the URL ends with a slash before adding the API path
+        const baseUrl = config.prowlarrUrl.endsWith('/') ? config.prowlarrUrl : `${config.prowlarrUrl}/`;
+        const url = `${baseUrl}api/v1/search?apikey=${config.prowlarrApiKey}&query=${encodeURIComponent(query)}${categoryParam}`;
+        
+        console.log('Searching Prowlarr with URL:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Prowlarr results:', data);
+        return processSearchResults(data, query);
+    } catch (error) {
+        console.error('Error searching Prowlarr:', error);
+        showNotification('Error connecting to Prowlarr. Check your API settings.', 'error');
+        return [];
+    }
+}
+
+function getCategoryParam() {
+    switch (config.searchCategories) {
+        case 'movies':
+            return '&categories=2000';
+        case 'tv':
+            return '&categories=5000';
+        case 'anime':
+            // Changed from 6000 (XXX) to 5070 (Anime)
+            return '&categories=5070';
+        default:
+            return '';
+    }
+}
+
+// TMDB API
+async function searchTMDB(query) {
+    try {
+        const url = `https://api.themoviedb.org/3/search/multi?api_key=${config.tmdbApiKey}&query=${encodeURIComponent(query)}`;
+        
+        console.log('Searching TMDB with URL:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('TMDB results:', data);
+        return data.results.filter(item => item.media_type === 'movie' || item.media_type === 'tv');
+    } catch (error) {
+        console.error('Error searching TMDB:', error);
+        showNotification('Error connecting to TMDB. Check your API key.', 'error');
+        return [];
+    }
+}
+
+async function getTMDBDetails(id, mediaType) {
+    try {
+        const url = `https://api.themoviedb.org/3/${mediaType}/${id}?api_key=${config.tmdbApiKey}`;
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching TMDB details:', error);
+        return null;
+    }
+}
+
+// Process and display results
+function processSearchResults(prowlarrResults, query) {
+    if (!prowlarrResults || prowlarrResults.length === 0) {
+        return [];
+    }
+    
+    // Filter based on quality preference if set
+    if (config.preferredQuality !== 'any') {
+        const qualityKeywords = {
+            'hd': ['720p', '1080p', 'HD'],
+            '4k': ['4K', '2160p', 'UHD'],
+            'sd': ['480p', '576p', 'DVDRip', 'SDRip']
+        };
+        
+        const keywords = qualityKeywords[config.preferredQuality] || [];
+        if (keywords.length > 0) {
+            prowlarrResults = prowlarrResults.filter(result => {
+                const title = result.title.toLowerCase();
+                return keywords.some(keyword => title.includes(keyword.toLowerCase()));
+            });
+        }
+    }
+    
+    return prowlarrResults;
+}
+
+async function displayResults(query) {
+    loader.style.display = 'block';
+    initialView.style.display = 'none';
+    noResults.style.display = 'none';
+    resultsView.style.display = 'none';
+    
+    console.log('Searching for:', query);
+    
+    try {
+        const prowlarrResults = await searchProwlarr(query);
+        const tmdbResults = await searchTMDB(query);
+        
+        loader.style.display = 'none';
+        
+        if (!prowlarrResults || prowlarrResults.length === 0) {
+            noResults.style.display = 'block';
+            return;
+        }
+        
+        resultsContainer.innerHTML = '';
+        resultsView.style.display = 'block';
+        
+        // Map TMDB results to prowlarr results by matching titles
+        const mappedResults = prowlarrResults.map(prowlarrResult => {
+            const cleanTitle = prowlarrResult.title
+                .replace(/\([^)]*\)|\[[^\]]*\]|[._-]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+            
+            const tmdbMatch = tmdbResults.find(tmdbItem => {
+                const tmdbTitle = (tmdbItem.title || tmdbItem.name || '').toLowerCase();
+                return cleanTitle.includes(tmdbTitle) || tmdbTitle.includes(cleanTitle);
+            });
+            
+            return {
+                prowlarr: prowlarrResult,
+                tmdb: tmdbMatch || null
+            };
+        });
+        
+        // Group results by TMDB ID to avoid duplicates
+        const groupedResults = {};
+        mappedResults.forEach(result => {
+            if (result.tmdb) {
+                const key = `${result.tmdb.id}-${result.tmdb.media_type}`;
+                if (!groupedResults[key]) {
+                    groupedResults[key] = {
+                        tmdb: result.tmdb,
+                        sources: []
+                    };
+                }
+                groupedResults[key].sources.push(result.prowlarr);
+            } else {
+                // For results without TMDB match, use title as key
+                const key = result.prowlarr.title;
+                if (!groupedResults[key]) {
+                    groupedResults[key] = {
+                        tmdb: null,
+                        title: result.prowlarr.title,
+                        sources: []
+                    };
+                }
+                groupedResults[key].sources.push(result.prowlarr);
+            }
+        });
+        
+        // Display grouped results
+        Object.values(groupedResults)
+            .slice(0, config.resultsPerPage)
+            .forEach(result => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.onclick = () => showMovieDetail(result);
+                
+                let posterPath, title, year;
+                
+                if (result.tmdb) {
+                    posterPath = result.tmdb.poster_path;
+                    title = result.tmdb.title || result.tmdb.name;
+                    year = result.tmdb.release_date ? 
+                        result.tmdb.release_date.substring(0, 4) : 
+                        (result.tmdb.first_air_date ? result.tmdb.first_air_date.substring(0, 4) : '');
+                } else {
+                    title = result.title;
+                    // Try to extract year from title
+                    const yearMatch = title.match(/\b(19|20)\d{2}\b/);
+                    year = yearMatch ? yearMatch[0] : '';
+                }
+                
+                let posterHTML;
+                if (posterPath) {
+                    posterHTML = `<img src="https://image.tmdb.org/t/p/w500${posterPath}" alt="${title}" class="movie-poster">`;
+                } else {
+                    posterHTML = `<div class="placeholder-poster">🎬</div>`;
+                }
+                
+                card.innerHTML = `
+                    ${posterHTML}
+                    <div class="movie-info">
+                        <div class="movie-title">${title}</div>
+                        <div class="movie-year">${year}</div>
+                    </div>
+                `;
+                
+                resultsContainer.appendChild(card);
+            });
+    } catch (error) {
+        console.error('Error displaying results:', error);
+        loader.style.display = 'none';
+        showNotification('Error processing search results. Try again.', 'error');
+    }
+}
+
+async function showMovieDetail(result) {
+    movieDetail.innerHTML = '';
+    movieSources.innerHTML = '';
+    
+    let detailData = null;
+    
+    if (result.tmdb) {
+        // Show loader in modal
+        movieDetail.innerHTML = '<div class="loader" style="display:block;margin:50px auto;"></div>';
+        movieModal.style.display = 'flex';
+        setTimeout(() => movieModal.classList.add('show'), 10);
+        
+        detailData = await getTMDBDetails(result.tmdb.id, result.tmdb.media_type);
+    }
+    
+    // Prepare movie detail section
+    let title, year, overview, posterPath, rating;
+    
+    if (detailData) {
+        title = detailData.title || detailData.name;
+        year = detailData.release_date ? 
+            detailData.release_date.substring(0, 4) : 
+            (detailData.first_air_date ? detailData.first_air_date.substring(0, 4) : '');
+        overview = detailData.overview;
+        posterPath = detailData.poster_path;
+        rating = detailData.vote_average ? `${detailData.vote_average.toFixed(1)}/10` : 'N/A';
+    } else if (result.tmdb) {
+        title = result.tmdb.title || result.tmdb.name;
+        year = result.tmdb.release_date ? 
+            result.tmdb.release_date.substring(0, 4) : 
+            (result.tmdb.first_air_date ? result.tmdb.first_air_date.substring(0, 4) : '');
+        overview = result.tmdb.overview;
+        posterPath = result.tmdb.poster_path;
+        rating = result.tmdb.vote_average ? `${result.tmdb.vote_average.toFixed(1)}/10` : 'N/A';
+    } else {
+        title = result.title;
+        const yearMatch = title.match(/\b(19|20)\d{2}\b/);
+        year = yearMatch ? yearMatch[0] : '';
+        overview = '';
+        posterPath = null;
+        rating = 'N/A';
+    }
+    
+    let posterHTML;
+    if (posterPath) {
+        posterHTML = `<img src="https://image.tmdb.org/t/p/w500${posterPath}" alt="${title}" class="movie-poster-large">`;
+    } else {
+        posterHTML = `<div class="placeholder-poster-large">🎬</div>`;
+    }
+    
+    movieDetail.innerHTML = `
+        ${posterHTML}
+        <div class="movie-detail-info">
+            <h2 class="movie-detail-title">${title}</h2>
+            <div class="movie-meta">
+                ${year ? `<span class="movie-year">${year}</span>` : ''}
+                <span class="movie-rating">⭐ ${rating}</span>
+            </div>
+            <div class="movie-overview">${overview || 'No overview available.'}</div>
+        </div>
+    `;
+    
+    // Add torrent sources
+    if (result.sources && result.sources.length > 0) {
+        result.sources.forEach(source => {
+            const sourceItem = document.createElement('div');
+            sourceItem.className = 'result-item';
+            
+            const size = source.size ? formatFileSize(source.size) : 'Unknown size';
+            const seeders = source.seeders || 0;
+            const leechers = source.leechers || 0;
+            
+            sourceItem.innerHTML = `
+                <div class="result-title">${source.title}</div>
+                <div class="result-info">
+                    <span class="result-size">${size}</span>
+                    <span class="result-peers">👤 ${seeders}/${leechers}</span>
+                    <a href="${source.downloadUrl || '#'}" class="magnet-link" target="_blank">Download</a>
+                </div>
+            `;
+            
+            movieSources.appendChild(sourceItem);
+        });
+    } else {
+        movieSources.innerHTML = '<div class="result-item">No sources available for this title.</div>';
+    }
+    
+    // Show modal if not already visible
+    if (movieModal.style.display !== 'flex') {
+        movieModal.style.display = 'flex';
+        setTimeout(() => movieModal.classList.add('show'), 10);
+    }
+}
+
+// Helper functions
+function formatFileSize(bytes) {
+    if (!bytes || isNaN(bytes)) return 'Unknown';
+    
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+}
+
+function getCategoryName(categoryId) {
+    const categories = {
+        1000: 'Console',
+        2000: 'Movies',
+        3000: 'Audio',
+        4000: 'PC',
+        5000: 'TV',
+        // Removed 6000: 'XXX'
+        7000: 'Other',
+        8000: 'Books'
+    };
+    
+    // Find the base category (thousands)
+    const baseCategory = Math.floor(categoryId / 1000) * 1000;
+    return categories[baseCategory] || 'Unknown';
+}
+
+function showNotification(message, type = 'success') {
+    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+
+// Event Listeners
+searchButton.addEventListener('click', () => {
+    const query = searchInput.value.trim();
+    if (query) {
+        displayResults(query);
+    } else {
+        showNotification('Please enter a search term', 'error');
+    }
+});
+
+searchInput.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+        const query = searchInput.value.trim();
+        if (query) {
+            displayResults(query);
+        } else {
+            showNotification('Please enter a search term', 'error');
+        }
+    } else if (config.autoSearch && searchInput.value.trim().length > 2) {
+        // Debounce auto search
+        clearTimeout(searchInput.searchTimeout);
+        searchInput.searchTimeout = setTimeout(() => {
+            displayResults(searchInput.value.trim());
+        }, 500);
+    }
+});
+
+closeModal.addEventListener('click', () => {
+    movieModal.classList.remove('show');
+    setTimeout(() => {
+        movieModal.style.display = 'none';
+    }, 300);
+});
+
+// Close modal when clicking outside content
+movieModal.addEventListener('click', (e) => {
+    if (e.target === movieModal) {
+        closeModal.click();
+    }
+});
+
+themeToggle.addEventListener('click', () => {
+    config.darkMode = !config.darkMode;
+    applyTheme();
+    localStorage.setItem('prowSearchSettings', JSON.stringify(config));
+});
+
+saveSettingsButton.addEventListener('click', saveSettings);
+
+// Initialize app
+document.addEventListener('DOMContentLoaded', () => {
+    loadSettings();
+    
+    // Focus search input on load
+    searchInput.focus();
+});
+</script>
