@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Page de Téléchargement</title>
+  <style>
+    body {
+      font-family: 'Consolas', monospace;
+      background: #1e1e1e;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #00ff00;
+    }
+
+    .popup {
+      background: #2c2c2c;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      border: 2px solid #00ff00;
+    }
+
+    button {
+      padding: 12px 25px;
+      margin: 10px;
+      font-size: 16px;
+      font-family: 'Consolas', monospace;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .download-btn {
+      background: #007f00;
+      color: white;
+    }
+
+    .download-btn:hover {
+      background: #00a300;
+    }
+
+    .code-btn {
+      background: #b58900;
+      color: white;
+    }
+
+    .code-btn:hover {
+      background: #d4a000;
+    }
+
+    .copy-btn {
+      background: #444;
+      color: #00ff00;
+      border: 1px solid #00ff00;
+    }
+
+    .copy-btn:hover {
+      background: #555;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .inner-popup {
+      background: #000;
+      padding: 20px;
+      border: 2px solid #00ff00;
+      border-radius: 10px;
+      text-align: left;
+      width: 500px;
+      max-width: 90%;
+      color: #00ff00;
+      font-size: 15px;
+    }
+
+    .loader {
+      border: 4px solid #222;
+      border-top: 4px solid #00ff00;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      margin: 20px auto;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .prompt-line {
+      margin: 10px 0;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="popup">
+    <h2>Page de téléchargement</h2>
+    <p>Cliquez sur le bouton pour télécharger ou obtenir le code du film Minecraft. Page faite par Mehdi.</p>
+    <button class="download-btn" onclick="window.location.href='https://url-locker.vercel.app/?hash=U2FsdGVkX18zCG6eaP42p1L2u3SXXs1L2a3S4hp1L2u3SJxiJ2ebHmQQKnVF1Kx4dX46cqk5YQDcdsZhjQIirp1L2u3STo9Uyn9WiDs1L2a3S4hFPLX6R6zba7dw5fp1L2u3SNRz1auWVtPgF106jG4eYSQAeYtl7WfDLJy7s1L2a3S4hbPukCtKxQp1L2u3SZjfGfRNlrZhOWY06ZiuTIZAjRNulp1L2u3SBMLNHrMFvw5NWm7s1L2a3S4h4tGSSvZERmfqFtXz5Fz91AZnimLePS7hQZ6XX0p1L2u3S6l1CuEUff27NLrSFp0W3reIo8Hw9BbkJj'">Télécharger</button>
+    <br>
+    <button class="code-btn" onclick="checkIP()">Code</button>
+   <p>Mehdi @ 2025</p>
+  </div>
+
+  <div class="overlay hidden" id="secondPopup">
+    <div class="inner-popup" id="popupContent">
+      <div id="terminalOutput">
+        <div class="prompt-line">> Vérification de l'accès...</div>
+        <div class="loader" id="loader"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function checkIP() {
+      document.getElementById('secondPopup').classList.remove('hidden');
+      document.getElementById('loader').classList.remove('hidden');
+      const terminal = document.getElementById("terminalOutput");
+
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        const ip = data.ip;
+
+        setTimeout(() => {
+          document.getElementById('loader').classList.add('hidden');
+          
+          if (ip === '41.249.83.153') {
+            terminal.innerHTML += `
+              <div class="prompt-line">> Accès autorisé</div>
+              <div class="prompt-line">> Mot de passe:</div>
+              <div class="prompt-line" id="passwordText">brrbrrpatapim_é&çè'ç_èç_81274983275098</div>
+              <button class="copy-btn" onclick="copyPassword()">Copier le mot de passe</button>
+            `;
+          } else {
+            terminal.innerHTML += `
+              <div class="prompt-line error">> Erreur: Accès refusé. Cette fonction est réservée à une IP spécifique.</div>
+            `;
+          }
+
+        }, 4000);
+
+      } catch (err) {
+        document.getElementById('loader').classList.add('hidden');
+        terminal.innerHTML += `
+          <div class="prompt-line error">> Erreur de connexion à l'API IP.</div>
+        `;
+      }
+    }
+
+    function copyPassword() {
+      const password = document.getElementById("passwordText").innerText;
+      navigator.clipboard.writeText(password).then(() => {
+        alert("Mot de passe copié !");
+      }, () => {
+        alert("Échec de la copie !");
+      });
+    }
+  </script>
+
+</body>
+</html>
